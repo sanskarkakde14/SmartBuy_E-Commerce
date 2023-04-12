@@ -1,0 +1,84 @@
+{% extends 'app/base.html' %}
+{% load static %}
+{% block title %}Checkout{% endblock title %}
+{% block main-content %}
+<div class="container">
+ <div class="row mt-5">
+  <div class="col-sm-6">
+    <h4>Order Summary</h4>
+    <hr>
+    {% for item in cart_items %}
+      <div class="card mb-2">
+        <div class="card-body">
+          <h5>Product: {{item.product.title}}</h5>
+          <p>Quantity: {{item.quantity}}</p>
+          <p class="fw-bold">₹ {{item.total_cost}}</p>
+        </div>
+      </div>
+    {% endfor %}
+    <p class="fw-bold">Total Cost = ₹ {{totalcost}}</p>
+     <hr>
+      <small><b>Term and Condition: </b> By using our website and placing an order, you agree to the following terms and conditions. All orders are subject to acceptance by our team, and we reserve the right to reject any order for any reason. Payment must be made in full before the order is shipped. We accept various payment methods, including credit cards, debit cards, and PayPal. All payments are processed securely, and we do not store your payment information on our website. We strive to provide accurate product information and images, but we cannot guarantee the accuracy or completeness of the information. We are not responsible for any errors or omissions in product descriptions or prices. We reserve the right to change prices, products, or shipping policies at any time without prior notice. Please review our shipping and return policies before placing an order. If you have any questions or concerns, please contact us.</small>
+  </div>
+  <div class="col-sm-4 offset-sm-1">
+    <h4>Select Shipping Address</h4>
+    <hr>
+    <form action="/paymentdone" id="myform">
+    {% for ad in add %}
+      <div class="card">
+        <div class="card-body">
+        <h5>{{ad.name}}</h5>
+        <p>{{ad.locality}}, {{ad.city}}, {{ad.state}}- {{ad.zipcode}}</p>
+        </div>
+      </div>
+        <div class="form-check mt-2 mb-5">
+          <input class="form-check-input" type="radio" name="custid" id="custadd{{forloop.counter}}" value="{{ad.id}}" checked>
+          <label class="form-check-label fw-bold" for="custadd{{forloop.counter}}">
+            Address: {{ forloop.counter }} </label>
+        </div>
+      {% endfor %}
+        <div class="border p-3">
+          {% comment %} <button type="submit" class="btn btn-warning mt-3 px-5 fw-bold" id="continuebtn">Continue</button> {% endcomment %}
+          <!-- Set up a container element for the button -->
+          <p class="fw-bold">Payment Options:</p>
+          <div id="paypal-button-container"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock main-content %}
+
+{% block payment-gateway %} 
+ <!-- Include the PayPal JavaScript SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
+
+    <script>
+        // Render the PayPal button into #paypal-button-container
+        paypal.Buttons({
+
+            // Set up the transaction
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: '{{totalcost}}'
+                        }
+                    }]
+                });
+            },
+
+            // Finalize the transaction
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    // Show a success message to the buyer
+                    alert('Transaction completed by ' + details.payer.name.given_name + '!');
+                    document.getElementById("myform").submit()
+                });
+            }
+
+
+        }).render('#paypal-button-container');
+    </script>
+
+{% endblock payment-gateway %}
